@@ -1,0 +1,54 @@
+Type: Package
+Package: CoutsQc
+Title: Calculation of costs from Quebec's medical-administrative databases
+Version: 0.2.0
+Authors@R: 
+    c(
+	    person(
+	    	"Simon", "LaRue",
+	    	email = "simon.larue@crchudequebec.ulaval.ca",
+	    	role = c("cre", "aut"),
+	    	comment = c(ORCID = "0009-0009-2344-0184")
+	    ),
+	    person(
+	    	"Jason R", "Gertin",
+	    	email = "jason.guertin@fmed.ulaval.ca",
+	    	role = c("aut"),
+	    	comment = c(ORCID = "0000-0003-1718-5307")
+	    ),
+	    person(
+	    	"Marzia Angela", "Cremona",
+	    	role = c("aut"),
+	    	comment = c(ORCID = "0000-0001-8899-7316")
+	    ),
+	    person(
+	    	"Maude", "Laberge",
+	    	role = c("aut"),
+	    	comment = c(ORCID = "0000-0003-1274-136X")
+	    )
+    )
+Description: A macro that facilitates the accounting of inflated costs for
+  Quebec's medico-administrative databases such as medical services,
+  pharmaceutical services, hospital stays, and emergency room visits.
+License: GPL (>= 3)
+URL: https://github.com/LaRue-S/Package-CoutQc
+BugReports: https://github.com/LaRue-S/Package-CoutQc/issues
+Depends: 
+    R (>= 4.1.0)
+Imports: 
+    collapse,
+    data.table,
+    purrr,
+    R6,
+    utils
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0

@@ -1,0 +1,403 @@
+---
+title: "The CoutsQc R package"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
+vignette: >
+  %\VignetteIndexEntry{The CoutsQc R package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(CoutsQc)
+```
+
+---
+This vignette introduces the `CoutsQc` `R` package which can be used to inflate and aggregate cost data contained within different Quebec health administrative databases. The package uses the `R6` class system related to object-oriented programming. Though having a basic understanding of the `R6` class system is useful, it is not essential.
+---
+
+## Introduction
+
+The package objective is to provide investigators a with a tool that allows them to conduct cost analyses using the Quebec (Canada) health administrative databases (a technical guide is available for more information elsewhere: XYZ[JG3]). The package offers a simple and versatile approach that sums medical resource use across individuals, allowing investigators to undertake subsequent analyses. The main features are as follow:
+
+ - Calculate the actual cost of services while also considering cost inflations (estimated using published consumer price indexes);
+ - Convert resource utilization data into costs using unit cost conversion tables;
+ - Identify services period according to calendar years, fiscal years, months, quarters or follow-up intervals from index dates;
+ - Augment databases by adding actual costs and indicating when these services were utilized to the original data. It is possible to determine, with the use of an indicator variable, if an individual is alive or dead and if an individual is covered or not by the Quebec public drug insurance plan (optional options).
+ - Aggregate cost data into one observation for each individual by period, by database.
+ - Generate a summary of average actual costs by period and database.
+
+## Installation
+
+You will need to obtain the package from <where it is distributed>[JG4] and download the compressed file (.tar.gz) locally to your system.
+
+Then simply install it with the command `install.packages()` with the option `repos = NULL` in the R console.
+
+the `CoutsQc` package requires the following package to work correctly: `collapse`, `data.table`, `purrr`, `R6` and `utils`.
+
+
+``` {r, eval = F} 
+install.packages("<path_to_package>/CoutsQc_<version>.tar.gz", repos = NULL)
+```
+
+
+## Package design
+
+The package is comprised of two main structures: the `CoutQc` class and the `CoutQc_bd` class. `CoutQc_bd` is the structure that handles the logic of the Quebec health administrative databases. Its role is to ensure the integrity of the data provided, to identify period of services, and to aggregate and inflate costs. User interacts with this class to first set-up their databases to use in subsequent procedures. The `CoutQc` class is the structure that handle the combined databases. Its role is to aggregate data and compute indicators and summary of actual costs. A typical use of those two classes is as follow:
+
+ 1. For each health expense databases, create a `CoutQc_bd` object with the `coutqc_bd()` function. It is necessary to specify a reference year to which costs will be inflated to, a consumer price index conversion table and, if necessary, an unit cost conversion table to convert resource utilizations into costs. See `help("coutqc_bd")`, the documentation for additional details.
+ 2. Use the `coutqc()` function to create a class `CoutQc` object with the database structures created in the previous step and the desired parameters. See `help("coutqc")` for additional detail on specific parameters. Once the procedure is executed, results and datasets can be extracted directly.
+
+For autonomous users, the package provides access to some of the individual functions used by the classes with their documentation. See `help(package = "CoutsQc")`. These functions efficiently handle intermediate steps that user can reuses in their own script.
+
+
+### Input Parameters Details
+
+#### `coutqc_bd` usage
+
+``` {r, eval = F} 
+coutqc_bd(
+  data,
+  reference_year,
+  cpi,
+  unit_cost = NULL,
+  period_duration = "year",
+  follow_interval = NULL,
+  cohort = NULL,
+  validate = TRUE
+)
+```
+
+The `data` argument is the table that contain the medico-administrative data. Its must minimally be composed of an identifier `id`, a date variable for the date of services named `service_date` and a variable for the value of those services named `service_cost`. This value can be either a direct cost or a resource utilization indicator.
+
+The `cpi` argument specifies the consumer price index table. A version is available in the package see `help(tbl_cpi)`. Its format is composed of two variables: `year_cpi` corresponding to the calendar years and `cpi` corresponding to the consumer price index of those years. The associated argument `reference_year` is mandatory and specifies to which year the cost should be inflated to.
+
+The `unit_cost` argument is a `data.frame` used in the conversion of resource utilization indicator into costs. The format of the table consists of two variables: `year_unit_cost` corresponding to the year at the end of the fiscal year and `unit_cost` corresponding to the cost of one unit of resource utilized.
+
+The `period_duration` argument specifies the duration of the period that is identified. By default, `"year"` will identify a period corresponding to calendar years. We can choose to use `"fiscal"` years, which, in Quebec, begin on April 1st of a given year and end on March 31st the following year. The options `"month"` and `"quarter"` identify the month and quarter of each calendar year.
+The option `"follow"` allows the user to define the duration of the period by the time elapsed from an individual's index date. The time's unit is expressed in number of x-days intervals with the associated argument `"follow_interval"` used to specify the length of the intervals.
+For example, a value of `follow_interval = 90` days will group services that took place in the 0 to 89 days after the individual's index date, group those that took place in the 90 to 179 days after the individual's index date, etc. Likewise for services that took place in the intervals before the individual's index date. The `"follow"` periods correspond to "the number of x-days intervals elapsed since the individual's index date" for services that took place after the index date. These options allow for a flexible way to define periods.
+
+#### `coutqc` usage
+
+``` {r, eval = F} 
+coutqc(
+  ...,
+  cohort = NULL,
+  public_insurance = NULL,
+  alive = FALSE,
+  eligible = FALSE,
+  filter_index = FALSE,
+  filter_cohort_id = FALSE,
+  filter_period_limit = NULL,
+  analysis = TRUE,
+  by_aggregate = NULL
+)
+```
+
+The `...` argument takes in any number of `<name> = <CoutQc_bd>` pairs, a database object of class `CoutQc_bd` obtained by using the previously presented `coutqc_bd()` function. The given `<name>` helps to identify the database in the function output.
+
+The `cohort` argument is a `data.frame` with multiple uses in the package classes. First, it allows the user to provide the variable `"date_index"`, each individual's index date. It is used when `period_duration = "follow"` as mentioned previously and for some filtering options such as `filter_index` and `filter_cohort_id`. Furthermore, the `cohort` argument is used to supply the `"date_birth"` and `"date_death"` for the computation of the alive indicator when the `alive` argument is set to `TRUE`.
+
+The `public_insurance` argument is a `data.frame` used as input to compute individual's eligibility to Quebec public insurance plan indicator. It must be comprised of the two variables `"date_subscribe"` and `"date_withdraw"`. The associated argument `eligible` must be set to `TRUE` for it to proceed.
+
+The `by_aggregate` argument allows the user to specify the aggregation variables on which the inflated costs will be summed. For example, `by_aggregate = c("database", "period")` will sum actual costs for each period and for each database.
+
+## Demo 
+
+### Data
+
+Demo databases are used in this section for a demonstration of the package's use. These consist of the following databases:
+
+- pharma_coutsqc, pharmaceutical services database;
+- medical_coutsqc, medical services database;
+- hospital_coutsqc, hospital services database;
+- emergency_coutsqc, emergency visit database;
+- insurance_coutsqc, RAMQ medical insurance eligibility database;
+- cohort_coutsqc, cohort database.
+
+```{r}
+library(CoutsQc)
+
+set.seed(1465)
+demo <- generate_demo()
+
+head(demo$pharma_coutsqc)
+head(demo$medical_coutsqc)
+head(demo$hospital_coutsqc)
+head(demo$emergency_coutsqc)
+head(demo$insurance_coutsqc)
+head(demo$cohort_coutsqc)
+```
+
+
+### Using the `CoutQc_bd` and `CoutQc` classes
+
+We first need to create instances of `CoutQc_bd` objects with the `coutqc_bd()` function for each health administrative databases. Users are required to specify the reference year to be used within their analyses. For databases containing a resource utilization indicator, the unit cost conversion table must also be provided.
+
+In this demo, pharmacy and medical claims are already formatted to be used directly within the `coutqc_bd()` function, since the names in the datasets correspond to the column names that are required.
+
+```{r}
+pharm <- coutqc_bd(
+  demo$pharma_coutsqc,
+  reference_year = 2022,
+  cpi = tbl_cpi
+)
+medic <- coutqc_bd(
+  demo$medical_coutsqc,
+  reference_year = 2022,
+  cpi = tbl_cpi
+)
+```
+
+For hospital services, the Quebec's database may contain two unit indicators, one for inhospital admissions (`NIRRU`) and another for same day surgeries (`NIRRU_c1j`). These need to be separated in two datasets before using the `coutqc_bd()` function.
+In this demo dataset, services with a non-missing value for the variable `nirru_c1j` suggest a same day surgery stay; otherwise, a regular inhospital admissions.
+A `service_cost` column is created accordingly, that is with the `nirru` variable for inhospital admissions database and with the `nirru_c1j` variable for the same day surgeries database. Both databases are then supplied to the `coutqc_bd` function with their respective unit cost table.
+
+```{r}
+hospital_coutsqc_sej <-
+	demo$hospital_coutsqc[which(is.na(demo$hospital_coutsqc$nirru_c1j)),]
+hospital_coutsqc_sej$service_cost <- hospital_coutsqc_sej$nirru
+
+hospital_coutsqc_c1j <-
+	demo$hospital_coutsqc[which(!is.na(demo$hospital_coutsqc$nirru_c1j)),]
+hospital_coutsqc_c1j$service_cost <- hospital_coutsqc_c1j$nirru_c1j
+
+hopit_sej <- coutqc_bd(
+  hospital_coutsqc_sej,
+  reference_year = 2022,
+  cpi = tbl_cpi,
+  unit_cost = tbl_nirru
+)
+hopit_c1j <- coutqc_bd(
+  hospital_coutsqc_c1j,
+  reference_year = 2022,
+  cpi = tbl_cpi,
+  unit_cost = tbl_nirruc1j
+)
+```
+
+For emergency department database, it does not contained a `service_cost` variable. In order to make it valid for the class, users can add the column `service_cost` with a value of 1 for each row in the dataset and use a unit cost table for visits to the emergency department.
+
+```{r}
+demo$emergency_coutsqc$service_cost <- rep(1, nrow(demo$emergency_coutsqc))
+emergency <- coutqc_bd(
+	demo$emergency_coutsqc,
+	reference_year = 2022,
+  cpi = tbl_cpi,
+	unit_cost = tbl_urgence
+)
+```
+
+Once the databases are well defined, we can use the function `coutqc()` with each previously created databases. By printing the created objects, we can get feedback on the inputs and options used by the class.
+
+```{r}
+macro_coutqc <- coutqc(
+	pharmacy = pharm,
+	medical = medic,
+	hospital_sej = hopit_sej,
+	hospital_c1j = hopit_c1j,
+	emergency = emergency
+)
+print(macro_coutqc)
+```
+
+
+Once the calculations have been performed, it is possible to extract the augmented databases using the `$aug_data` method. It is also possible to export the datasets in `.csv` format using the `$write(path)` method. The parameter `path =` specifies the folder path where the augmented databases will be written. These will be named by the name supplied in the `coutqc()` function followed by `"_augmented.csv"`. The output cohort computed by the class will also be exported as `"out_cohort.csv"`.
+
+```{r}
+macro_coutqc$aug_data
+```
+
+```{r, eval=FALSE}
+macro_coutqc$write(path = "./data/")
+```
+
+Data aggregation is performed when the parameter `analysis = TRUE`. This makes it possible to obtain summary information as well as an output cohort where inflated costs are counted by period and by database. To do this, the `$summary()` method prints to the console a summaries of the results. In addition, the `$out_cohort` and the `$data_summary` methods allow the user to extract the output cohort and the summary, respectively.
+
+```{r}
+macro_coutqc$summary()
+```
+
+#### Period durations
+
+The class attribute `period_duration` allows users to indicate the period duration. By default, the value `"year"` specifies that the period is a calendar year but different periods may be specified. This parameter must be specified when calling the `coutqc_bd` functions for each database that was created. Here is an example of how to obtain costs per quarter.
+
+```{r}
+pharm_quar <- coutqc_bd(
+	demo$pharma_coutsqc,
+	reference_year = 2022,
+  cpi = tbl_cpi,
+	period_duration = "quarter"
+)
+medic_quar <- coutqc_bd(
+	demo$medical_coutsqc,
+	reference_year = 2022,
+  cpi = tbl_cpi,
+	period_duration = "quarter"
+)
+hopit_sej_quar <- coutqc_bd(
+  hospital_coutsqc_sej,
+  reference_year = 2022,
+  cpi = tbl_cpi,
+  unit_cost = tbl_nirru,
+	period_duration = "quarter"
+)
+hopit_c1j_quar <- coutqc_bd(
+  hospital_coutsqc_c1j,
+  reference_year = 2022,
+  cpi = tbl_cpi,
+  unit_cost = tbl_nirruc1j,
+	period_duration = "quarter"
+)
+emergency_quar <- coutqc_bd(
+	demo$emergency_coutsqc,
+	reference_year = 2022,
+  cpi = tbl_cpi,
+	unit_cost = tbl_urgence,
+	period_duration = "quarter"
+)
+
+macro_coutqc <- coutqc(
+	pharmacy = pharm_quar,
+	medical = medic_quar,
+	hospital_sej = hopit_sej_quar,
+	hospital_c1j = hopit_c1j_quar,
+	emergency = emergency_quar
+)
+
+macro_coutqc$data_summary$period
+```
+
+The option `period_duration = "follow"` is a flexible method that can be used to identify the follow-up period based on an index date. Note that the variable `"index_date"` must be present in each administrative databases or supplied within the `cohort` argument. In the example below, we identify follow-up periods with intervals of 180 days.
+
+```{r}
+pharm_suivi <- coutqc_bd(
+	demo$pharma_coutsqc,
+	reference_year = 2022,
+  cpi = tbl_cpi,
+	period_duration = "follow",
+	follow_interval = 180,
+	cohort = demo$cohort_coutsqc
+)
+medic_suivi <- coutqc_bd(
+	demo$medical_coutsqc,
+	reference_year = 2022,
+  cpi = tbl_cpi,
+	period_duration = "follow",
+	follow_interval = 180,
+	cohort = demo$cohort_coutsqc
+)
+hopit_sej_suivi <- coutqc_bd(
+  hospital_coutsqc_sej,
+  reference_year = 2022,
+  cpi = tbl_cpi,
+  unit_cost = tbl_nirru,
+	period_duration = "follow",
+	follow_interval = 180,
+	cohort = demo$cohort_coutsqc
+)
+hopit_c1j_suivi <- coutqc_bd(
+  hospital_coutsqc_c1j,
+  reference_year = 2022,
+  cpi = tbl_cpi,
+  unit_cost = tbl_nirruc1j,
+	period_duration = "follow",
+	follow_interval = 180,
+	cohort = demo$cohort_coutsqc
+)
+emergency_suivi <- coutqc_bd(
+	demo$emergency_coutsqc,
+	reference_year = 2022,
+  cpi = tbl_cpi,
+	unit_cost = tbl_urgence,
+	period_duration = "follow",
+	follow_interval = 180,
+	cohort = demo$cohort_coutsqc
+)
+
+macro_coutqc <- coutqc(
+	pharmacy = pharm_suivi,
+	medical = medic_suivi,
+	hospital_sej = hopit_sej_suivi,
+	hospital_c1j = hopit_c1j_suivi,
+	emergency = emergency_suivi
+)
+
+macro_coutqc$data_summary$period
+```
+
+#### Summary analysis
+
+By default, when using the `coutqc()` function, actual cost aggregations are produced by period and database. If the user wishes to produce different evaluations, it is possible to specify the column names of interest in the `by_aggregate` argument. It is also possible to use the `aggregate_cost()` function separately with the augmented databases extracted from the `$aug_data` method.
+
+```{r}
+macro_coutqc <- coutqc(
+	pharmacy = pharm,
+	medical = medic,
+	hospital_sej = hopit_sej,
+	hospital_c1j = hopit_c1j,
+	emergency = emergency,
+	by_aggregate = "period"
+)
+
+macro_coutqc$summary()
+```
+
+#### Calculation of indicators
+
+The `CoutQc` class includes procedures for calculating the alive and eligible indicators. They can be activated when creating the object using the arguments `alive = TRUE` and/or `eligible = TRUE`. A person will be considered alive during a period if they were alive for at least one moment within that period. Similarly, a person will be considered eligible during a period if they were eligible to the Quebec public drug insurance plan for at least one moment during that period. Note that to calculate the living indicator, one must provide the cohort file (`cohort =`) of individuals' date of birth and date of death. Similarly, for the eligible indicator, one must provide an insurance eligibility file (`public_insurance =`) with the individuals' registration and termination dates. Once calculated, the indicators are added to the augmented databases and the output cohort.
+
+```{r}
+macro_coutqc <- coutqc(
+	pharmacy = pharm,
+	medical = medic,
+	hospital_sej = hopit_sej,
+	hospital_c1j = hopit_c1j,
+	emergency = emergency,
+	cohort = demo$cohort_coutsqc,
+	public_insurance = demo$insurance_coutsqc,
+  alive = TRUE,
+  eligible = TRUE
+)
+
+macro_coutqc$out_cohort
+```
+
+#### Cohort data filter
+
+The class is equipped with several procedures that allow services to be filtered. The argument `filter_cohort_id = TRUE` filters individuals, retaining only those whose unique identifier `id` is present in the cohort database. The argument `filter_index = TRUE` is a filter on service dates that will exclude services administered before an index date. The `"index_date"` is a variable per individual that must be specified in the cohort database. It goes without saying that a cohort dataset (`cohort =`) must be provided to apply these filters. The argument `filter_period_limit = c(min, max)` allows the user to specify a range of periods to keep. Values for `min` and `max` must be in the range of those computed by the `coutqc_bd` period to work properly and may change according to the `period_duration` argument.
+
+Here is an example of the three filters used to select the services of the first hundred `id` in the `cohort_coutsqc` dataset, services that occurred after their index date, and services that occurred from 2019 to 2021 of the calendar years.
+
+```{r}
+cohort_reduce <- demo$cohort_coutsqc[1:100]
+
+macro_coutqc <- coutqc(
+	pharmacy = pharm,
+	medical = medic,
+	hospital_sej = hopit_sej,
+	hospital_c1j = hopit_c1j,
+	emergency = emergency,
+	cohort = cohort_reduce,
+	filter_cohort_id = TRUE,
+	filter_index = TRUE,
+	filter_period_limit = c(2019, 2021)
+)
+
+macro_coutqc$data_summary
+```
+
+
+## Note
+
+
+[JG3]On va avoir un URL a mettre ici
+[JG4]??? temporaire / ou obenir le package (guihub, autre)
+
