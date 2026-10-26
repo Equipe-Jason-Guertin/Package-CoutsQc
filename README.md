@@ -45,7 +45,7 @@ is available at the following address : https://doi.org/10.60918/30942
 
 ### Installation
 
-Use the `devtools` library for a straitforward installation of the latest version of the package from GitHub with it vignette.
+Use the `devtools` library for a straitforward installation of the latest version of the package from GitHub with its vignette.
 
 ```R
 devtools::install_github("Equipe-Jason-Guertin/Package-CoutsQc", build_vignettes = TRUE)
