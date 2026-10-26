@@ -31,7 +31,7 @@ Description: A macro that facilitates the accounting of inflated costs for
   Quebec's medico-administrative databases such as medical services,
   pharmaceutical services, hospital stays, and emergency room visits.
 License: GPL (>= 3)
-URL: https://github.com/LaRue-S/Package-CoutQc, https://github.com/Equipe-Jason-Guertin/Package-CoutsQc
+URL: https://github.com/Equipe-Jason-Guertin/Package-CoutsQc
 BugReports: https://github.com/Equipe-Jason-Guertin/Package-CoutsQc/issues
 Depends: 
     R (>= 4.1.0)
