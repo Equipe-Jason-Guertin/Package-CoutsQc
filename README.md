@@ -17,7 +17,7 @@ Un guide technique sur l’automatisation des analyses de coûts basées sur les
 
 ### Installation
 
-Utiliser la librairie devtools pour une installation simple de la dernière version du package à partir de GitHub avec sa vignette.
+Utiliser la librairie `devtools` pour une installation simple de la dernière version du package à partir de GitHub avec sa vignette.
 
 ```R
 devtools::install_github("Equipe-Jason-Guertin/Package-CoutsQc", build_vignettes = TRUE)
@@ -45,7 +45,7 @@ is available at the following address : https://doi.org/10.60918/30942
 
 ### Installation
 
-Use the `devtools` library for a straitforward installation of the latest version of the package from github with it vignette.
+Use the `devtools` library for a straitforward installation of the latest version of the package from GitHub with it vignette.
 
 ```R
 devtools::install_github("Equipe-Jason-Guertin/Package-CoutsQc", build_vignettes = TRUE)
