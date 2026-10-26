@@ -24,7 +24,7 @@ This vignette introduces the `CoutsQc` `R` package which can be used to inflate 
 
 ## Introduction
 
-The package objective is to provide investigators a with a tool that allows them to conduct cost analyses using the Quebec (Canada) health administrative databases (a technical guide is available for more information elsewhere: XYZ[JG3]). The package offers a simple and versatile approach that sums medical resource use across individuals, allowing investigators to undertake subsequent analyses. The main features are as follow:
+The package objective is to provide investigators a with a tool that allows them to conduct cost analyses using the Quebec (Canada) health administrative databases (a technical guide is available for more information elsewhere: https://doi.org/10.60918/30942). The package offers a simple and versatile approach that sums medical resource use across individuals, allowing investigators to undertake subsequent analyses. The main features are as follow:
 
  - Calculate the actual cost of services while also considering cost inflations (estimated using published consumer price indexes);
  - Convert resource utilization data into costs using unit cost conversion tables;
@@ -35,15 +35,15 @@ The package objective is to provide investigators a with a tool that allows them
 
 ## Installation
 
-You will need to obtain the package from <where it is distributed>[JG4] and download the compressed file (.tar.gz) locally to your system.
+The package is freely available in our GitHub repository at https://github.com/Equipe-Jason-Guertin/Package-CoutsQc.
 
-Then simply install it with the command `install.packages()` with the option `repos = NULL` in the R console.
+Simply install it with the command `install_github()` from the `devtools` library with the option `build_vignettes = NULL` in the R console.
 
-the `CoutsQc` package requires the following package to work correctly: `collapse`, `data.table`, `purrr`, `R6` and `utils`.
+The `CoutsQc` package requires the following package to work correctly: `collapse`, `data.table`, `purrr`, `R6` and `utils`.
 
 
 ``` {r, eval = F} 
-install.packages("<path_to_package>/CoutsQc_<version>.tar.gz", repos = NULL)
+devtools::install_github("Equipe-Jason-Guertin/Package-CoutsQc", build_vignettes = TRUE)
 ```
 
 
@@ -393,11 +393,3 @@ macro_coutqc <- coutqc(
 
 macro_coutqc$data_summary
 ```
-
-
-## Note
-
-
-[JG3]On va avoir un URL a mettre ici
-[JG4]??? temporaire / ou obenir le package (guihub, autre)
-
