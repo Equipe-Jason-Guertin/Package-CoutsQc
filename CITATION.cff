@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this technical guide, please cite it as follows."
+message: "If you use this package, please cite the technical guide as follows."
 title: "Guide technique sur l'automatisation des analyses de coûts basées sur les données médico-administratives du Québec"
 authors:
   - family-names: "Guertin"
