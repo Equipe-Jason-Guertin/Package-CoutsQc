@@ -1,5 +1,6 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it using the metadata from this file, including the reference to the technical guide."
+message: "If you use this technical guide, please cite it as follows."
+title: "Guide technique sur l'automatisation des analyses de coûts basées sur les données médico-administratives du Québec"
 authors:
   - family-names: "Guertin"
     given-names: "Jason Robert"
@@ -7,21 +8,9 @@ authors:
     given-names: "Maude"
   - family-names: "Cremona"
     given-names: "Marzia Angela"
-title: "CoutsQc: Analyses de coûts utilisant les bases médico-administratives du Québec"
-type: software
-repository-code: "https://github.com/Equipe-Jason-Guertin/Package-CoutsQc"
-references:
-  - type: report
-    authors:
-      - family-names: "Guertin"
-        given-names: "Jason Robert"
-      - family-names: "Laberge"
-        given-names: "Maude"
-      - family-names: "Cremona"
-        given-names: "Marzia Angela"
-    title: "Guide technique sur l'automatisation des analyses de coûts basées sur les données médico-administratives du Québec"
-    institution:
-      name: "Université Laval"
-    year: 2026
-    doi: "10.60918/30942"
-    url: "https://doi.org"
+type: generic
+doi: "10.60918/30942"
+url: "https://doi.org/10.60918/30942"
+year: 2026
+institution:
+  name: "Université Laval"
